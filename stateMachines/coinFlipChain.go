@@ -2,6 +2,8 @@ package stateMachines
 
 import (
 	"fmt"
+	"image/color"
+	"markov_chains/helpers"
 	"markov_chains/types"
 	"math"
 	"math/rand"
@@ -12,10 +14,10 @@ import (
 )
 
 type CoinFlipChain struct {
-	TransitionMatrix map[types.CoinFlipState]map[types.CoinFlipState]float64
-	CurrentState     types.CoinFlipState
-	StateCounter     map[types.CoinFlipState]int
-	StateLog         []types.CoinFlipState
+	TransitionMatrix helpers.Matrix ///map[types.State]map[types.State]float64
+	CurrentState     types.State
+	StateCounter     map[types.State]int
+	StateLog         []types.State
 	Description      string
 	LongestStreak    int
 	currentStreak    int
@@ -23,11 +25,11 @@ type CoinFlipChain struct {
 	totalSteps       int
 }
 
-func (c *CoinFlipChain) RunSimulation(steps int) map[types.CoinFlipState]int {
+func (c *CoinFlipChain) RunSimulation(steps int) map[types.State]int {
 	c.reset()
-	stateCounts := map[types.CoinFlipState]int{
-		types.Heads: 0,
-		types.Tails: 0,
+	stateCounts := map[types.State]int{
+		types.CoinFlip_Heads: 0,
+		types.CoinFlip_Tails: 0,
 	}
 	for i := 0; i < steps; i++ {
 		c.step()
@@ -43,9 +45,9 @@ func (c *CoinFlipChain) PlotStateSequence(filename string) error {
 	for i, state := range c.StateLog {
 		var y float64
 		switch state {
-		case types.Heads:
+		case types.CoinFlip_Heads:
 			y = 1
-		case types.Tails:
+		case types.CoinFlip_Tails:
 			y = 0
 		default:
 			y = -1
@@ -72,21 +74,80 @@ func (c *CoinFlipChain) PlotStateSequence(filename string) error {
 	return p.Save(8*vg.Inch, 3*vg.Inch, filename)
 }
 
+func (c *CoinFlipChain) PredictNthState(n int) helpers.Matrix {
+	return helpers.MatPow(c.TransitionMatrix, n, []types.State{types.CoinFlip_Heads, types.CoinFlip_Tails})
+}
+
+func (c *CoinFlipChain) plotStateProbabilitiesOverTime(filename string, maxSteps int) error {
+	headsProb := make(plotter.XYs, maxSteps+1)
+	tailsProb := make(plotter.XYs, maxSteps+1)
+
+	// Initial distribution: 100% Heads, 0% Tails
+	dist := map[types.State]float64{
+		types.CoinFlip_Heads: 0.50,
+		types.CoinFlip_Tails: 0.50,
+	}
+
+	probabilityArray := helpers.GenerateStateProbabilityArray(maxSteps, c.TransitionMatrix, dist, []types.State{types.CoinFlip_Heads, types.CoinFlip_Tails})
+
+	// iterate over and plot probabilityArray
+	for n := 0; n <= maxSteps; n++ {
+		headsProb[n].X = float64(n)
+		headsProb[n].Y = probabilityArray[n][types.CoinFlip_Heads]
+		tailsProb[n].X = float64(n)
+		tailsProb[n].Y = probabilityArray[n][types.CoinFlip_Tails]
+	}
+
+	p := plot.New()
+	p.Title.Text = "Probability of Heads/Tails at Step N"
+	p.X.Label.Text = "Step N"
+	lineHeads, err := plotter.NewLine(headsProb)
+	if err != nil {
+		return err
+	}
+	lineHeads.Color = color.RGBA{R: 255, G: 0, B: 0, A: 255} // Red for Heads
+	lineHeads.LineStyle.Width = vg.Points(2)
+	lineHeads.LineStyle.Dashes = []vg.Length{vg.Points(5), vg.Points(5)}
+
+	lineTails, err := plotter.NewLine(tailsProb)
+	if err != nil {
+		return err
+	}
+	lineTails.Color = color.RGBA{B: 255, A: 255} // Blue for Tails
+	lineTails.LineStyle.Width = vg.Points(2)
+
+	p.Add(lineHeads, lineTails)
+	p.Legend.Add("Heads", lineHeads)
+	p.Legend.Add("Tails", lineTails)
+	p.Y.Min = 0
+	p.Y.Max = 1
+
+	return p.Save(8*vg.Inch, 4*vg.Inch, filename)
+}
+
 func (c *CoinFlipChain) printResults() {
 	fmt.Printf("=== %s Results ===\n", c.Description)
 	fmt.Printf("Total Steps: %d\n", len(c.StateLog))
-	fmt.Printf("Heads: %d (%.2f%%)\n", c.StateCounter[types.Heads], float64(c.StateCounter[types.Heads])*100/float64(len(c.StateLog)))
-	fmt.Printf("Tails: %d (%.2f%%)\n", c.StateCounter[types.Tails], float64(c.StateCounter[types.Tails])*100/float64(len(c.StateLog)))
+	fmt.Printf("Heads: %d (%.2f%%)\n", c.StateCounter[types.CoinFlip_Heads], float64(c.StateCounter[types.CoinFlip_Heads])*100/float64(len(c.StateLog)))
+	fmt.Printf("Tails: %d (%.2f%%)\n", c.StateCounter[types.CoinFlip_Tails], float64(c.StateCounter[types.CoinFlip_Tails])*100/float64(len(c.StateLog)))
 	fmt.Printf("Longest Streak: %d\n", c.LongestStreak)
 	fmt.Printf("First Passage Time to Change State: %d\n", c.FirstPassage)
 	fmt.Printf("Entropy: %.4f\n", c.calculateEntropy())
+
+	title := fmt.Sprintf("%s - State Probabilities", c.Description[0:20])
+	err := c.plotStateProbabilitiesOverTime(title+".png", 100)
+
+	if err != nil {
+		fmt.Println("Error plotting:", err)
+	}
+	fmt.Printf("Output state probabilities line graph to %s\n", title+".png")
 	fmt.Println()
 }
 
 func (c *CoinFlipChain) reset() {
-	c.StateCounter = map[types.CoinFlipState]int{}
-	c.CurrentState = types.Start
-	c.StateLog = []types.CoinFlipState{}
+	c.StateCounter = map[types.State]int{}
+	c.CurrentState = types.CoinFlip_Start
+	c.StateLog = []types.State{}
 	c.LongestStreak = 0
 	c.totalSteps = 0
 	c.FirstPassage = 0
@@ -104,11 +165,11 @@ func (c *CoinFlipChain) step() {
 		randVal -= prob
 	}
 	// Update streaks
-	if nextState == c.CurrentState && nextState != types.Start {
+	if nextState == c.CurrentState && nextState != types.CoinFlip_Start {
 		c.currentStreak++
-	} else if nextState != types.Start {
+	} else if nextState != types.CoinFlip_Start {
 		// We are switching so mark first passage.
-		if c.FirstPassage == 0 && c.CurrentState != types.Start {
+		if c.FirstPassage == 0 && c.CurrentState != types.CoinFlip_Start {
 			c.FirstPassage = c.totalSteps
 		}
 		c.currentStreak = 1
@@ -123,8 +184,8 @@ func (c *CoinFlipChain) step() {
 }
 
 func (c *CoinFlipChain) calculateEntropy() float64 {
-	pHeads := float64(c.StateCounter[types.Heads]) / float64(c.totalSteps)
-	pTails := float64(c.StateCounter[types.Tails]) / float64(c.totalSteps)
+	pHeads := float64(c.StateCounter[types.CoinFlip_Heads]) / float64(c.totalSteps)
+	pTails := float64(c.StateCounter[types.CoinFlip_Tails]) / float64(c.totalSteps)
 
 	entropy := 0.0
 	if pHeads > 0 {
