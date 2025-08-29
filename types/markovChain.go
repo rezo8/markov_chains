@@ -1,6 +1,3 @@
-// markov_chain.go
-// Defines the MarkovChain struct
-
 package types
 
 type MarkovChain struct {
