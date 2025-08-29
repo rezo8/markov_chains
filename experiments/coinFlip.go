@@ -1,6 +1,9 @@
 package main
 
-import "markov_chains/stateMachines"
+import (
+	"fmt"
+	"markov_chains/stateMachines"
+)
 
 var coinFlipChain = stateMachines.NewCoinFlipChain()
 var evenlyBiasedCoinFlipChain = stateMachines.NewEvenlyBiasedCoinFlipChain()
@@ -21,4 +24,7 @@ func main() {
 	evenlyBiasedCoinFlipChain.PlotStateSequence("evenly_biased_coin_flip_chain.png")
 	unEvenlyBiasedCoinFlipChain.PlotStateSequence("unevenly_biased_coin_flip_chain.png")
 
+	fmt.Printf("%v\n", coinFlipChain.PredictNthState(1000))
+	fmt.Printf("%v\n", evenlyBiasedCoinFlipChain.PredictNthState(1000))
+	fmt.Printf("%v\n", unEvenlyBiasedCoinFlipChain.PredictNthState(1000))
 }
