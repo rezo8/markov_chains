@@ -1,4 +1,4 @@
-package main
+package experiments
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ var coinFlipChain = stateMachines.NewCoinFlipChain()
 var evenlyBiasedCoinFlipChain = stateMachines.NewEvenlyBiasedCoinFlipChain()
 var unEvenlyBiasedCoinFlipChain = stateMachines.NewUnEvenlyBiasedCoinFlipChain()
 
-func main() {
-	const steps = 10000
+func CoinFlip() {
+	const steps = 100000
 	coinFlipChain.RunSimulation(steps)
 	evenlyBiasedCoinFlipChain.RunSimulation(steps)
 	unEvenlyBiasedCoinFlipChain.RunSimulation(steps)
