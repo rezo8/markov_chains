@@ -10,7 +10,7 @@ var evenlyBiasedCoinFlipChain = stateMachines.NewEvenlyBiasedCoinFlipChain()
 var unEvenlyBiasedCoinFlipChain = stateMachines.NewUnEvenlyBiasedCoinFlipChain()
 
 func main() {
-	const steps = 10000
+	const steps = 100000
 	coinFlipChain.RunSimulation(steps)
 	evenlyBiasedCoinFlipChain.RunSimulation(steps)
 	unEvenlyBiasedCoinFlipChain.RunSimulation(steps)
