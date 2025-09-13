@@ -1,6 +1,8 @@
 package helpers
 
-import "markov_chains/types"
+import (
+	"markov_chains/types"
+)
 
 type Matrix = map[types.State]map[types.State]float64
 

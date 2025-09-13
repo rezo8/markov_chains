@@ -11,8 +11,53 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
-type CoinFlipChain struct { // Have this extend MatrixChain
+type CoinFlipChain struct {
 	*MatrixChain // embedded pointer to MatrixChain
+}
+
+type CoinFlipHigherOrderChain struct {
+	*HigherOrderMatrixChain // Embed the HigherOrderMatrixChain
+}
+
+func NewCoinFlipHigherOrderChain(K int, biasHeads float64) *CoinFlipHigherOrderChain {
+	// Generate the transition matrix for a higher-order coin flip chain
+	matrix := generateCoinFlipHigherOrderMatrix(K, biasHeads)
+
+	// Define the initial history (e.g., all Heads)
+	initialHistory := helpers.HigherOrderState{
+		States: make([]types.State, K),
+	}
+	for i := 0; i < K; i++ {
+		initialHistory.States[i] = types.CoinFlip_Heads
+	}
+
+	// Create the HigherOrderMatrixChain
+	higherOrderChain := NewHigherOrderMatrixChain(matrix, initialHistory, "Higher-Order Coin Flip Chain")
+
+	return &CoinFlipHigherOrderChain{
+		HigherOrderMatrixChain: higherOrderChain,
+	}
+}
+
+func generateCoinFlipHigherOrderMatrix(K int, biasHeads float64) helpers.HigherOrderMatrix {
+	matrix := make(helpers.HigherOrderMatrix)
+
+	// Generate all possible histories of length K
+	states := []types.State{types.CoinFlip_Heads, types.CoinFlip_Tails}
+	histories := helpers.GenerateHigherOrderStates(states, K)
+
+	// Populate the transition matrix
+	for _, history := range histories {
+		row := make(map[types.State]float64)
+
+		// Transition probabilities
+		row[types.CoinFlip_Heads] = biasHeads
+		row[types.CoinFlip_Tails] = 1 - biasHeads
+
+		matrix[history.StateKey()] = row
+	}
+
+	return matrix
 }
 
 func (m *CoinFlipChain) RunSimulation(steps int) {
