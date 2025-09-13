@@ -21,7 +21,7 @@ type HigherOrderMatrixChain struct {
 	totalSteps  int
 }
 
-func NewHigherOrderMatrixChain(matrix helpers.HigherOrderMatrix, initial helpers.HigherOrderState, description string) *HigherOrderMatrixChain {
+func NewHigherOrderMatrixChain(matrix helpers.HigherOrderMatrix, initial helpers.HigherOrderState, description string, k int) *HigherOrderMatrixChain {
 	if len(initial.States) == 0 {
 		panic("initial history cannot be empty")
 	}
@@ -29,7 +29,7 @@ func NewHigherOrderMatrixChain(matrix helpers.HigherOrderMatrix, initial helpers
 		Matrix:      matrix,
 		Description: description,
 		History:     initial,
-		K:           len(initial.States),
+		K:           k,
 		rng:         rand.New(rand.NewSource(time.Now().UnixNano())),
 		stateLog:    []types.State{},
 		stateCounts: map[types.State]int{},
@@ -42,6 +42,7 @@ func (c *HigherOrderMatrixChain) step() types.State {
 		panic(fmt.Sprintf("unknown history: %v", c.History))
 	}
 
+	// Generate a random number to determine the next state
 	r := c.rng.Float64()
 	cum := 0.0
 	var next types.State
@@ -53,6 +54,7 @@ func (c *HigherOrderMatrixChain) step() types.State {
 		}
 	}
 
+	// Fallback in case no state is selected
 	if next == "" {
 		for st := range row {
 			next = st
@@ -60,14 +62,18 @@ func (c *HigherOrderMatrixChain) step() types.State {
 		}
 	}
 
-	c.History.States = append(c.History.States[1:], next)
+	// Update the history: push `next` to the end and remove the first element
+	if len(c.History.States) == c.K {
+		c.History.States = append(c.History.States[1:], next) // Maintain size K
+	} else {
+		// If the history is not yet full, just append the next state
+		c.History.States = append(c.History.States, next)
+	}
+
+	// Log the state and update counters
 	c.stateLog = append(c.stateLog, next)
 	c.stateCounts[next]++
 	c.totalSteps++
-
-	if len(c.History.States) > c.K {
-		c.History.States = c.History.States[len(c.History.States)-c.K:]
-	}
 
 	return next
 }

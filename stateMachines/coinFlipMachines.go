@@ -16,6 +16,7 @@ func NewCoinFlipChain() *CoinFlipHigherOrderChain {
 			matrix,
 			helpers.HigherOrderState{States: []types.State{types.CoinFlip_Heads}},
 			"Fair Coin Flip Chain. Each flip has 50 percent chance to flip.\n",
+			1,
 		),
 	}
 }
@@ -32,6 +33,7 @@ func NewEvenlyBiasedCoinFlipChain() *CoinFlipHigherOrderChain {
 			matrix,
 			helpers.HigherOrderState{States: []types.State{types.CoinFlip_Heads}},
 			"Evenly Biased Coin Flip Chain. Each flip has a 95 percent chance to stay on original flip.\n",
+			1,
 		),
 	}
 }
@@ -45,6 +47,7 @@ func NewUnEvenlyBiasedCoinFlipChain() *CoinFlipHigherOrderChain {
 			},
 			helpers.HigherOrderState{States: []types.State{types.CoinFlip_Heads}},
 			"Unevenly Biased Coin Flip Chain. Tails flip has a 50 percent chance to flip while Heads has a 5%.\n",
+			1,
 		),
 	}
 }
