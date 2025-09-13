@@ -53,7 +53,6 @@ func (c *HigherOrderMatrixChain) step() types.State {
 		}
 	}
 
-	// fallback for rounding
 	if next == "" {
 		for st := range row {
 			next = st
@@ -61,7 +60,6 @@ func (c *HigherOrderMatrixChain) step() types.State {
 		}
 	}
 
-	// Update history
 	c.History.States = append(c.History.States[1:], next)
 	c.stateLog = append(c.stateLog, next)
 	c.stateCounts[next]++
@@ -110,13 +108,9 @@ func (m *HigherOrderMatrixChain) printResults() {
 	fmt.Println()
 }
 
-// TODO Fix this.
 func (c *HigherOrderMatrixChain) PredictNthState(n int) helpers.HigherOrderMatrix {
-	// Need a way to map from key to HigherOrderstate
-
 	keys := make([]helpers.HigherOrderState, 0, len(c.Matrix))
 	for k := range c.Matrix {
-		// Assuming k is already a HigherOrderState, otherwise convert appropriately
 		keys = append(keys, helpers.ToHigherOrderState(k))
 	}
 	return helpers.MatPowHO(c.Matrix, n, keys)

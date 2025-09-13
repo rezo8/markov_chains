@@ -13,16 +13,16 @@ func CoinFlip() {
 	const steps = 100000
 	coinFlipChain.RunSimulation(steps)
 	evenlyBiasedCoinFlipChain.RunSimulation(steps)
-	// unEvenlyBiasedCoinFlipChain.RunSimulation(steps)
+	unEvenlyBiasedCoinFlipChain.RunSimulation(steps)
 
 	const visuallyFriendlySteps = 500
 	coinFlipChain.RunSimulation(visuallyFriendlySteps)
 	evenlyBiasedCoinFlipChain.RunSimulation(visuallyFriendlySteps)
-	// unEvenlyBiasedCoinFlipChain.RunSimulation(visuallyFriendlySteps)
+	unEvenlyBiasedCoinFlipChain.RunSimulation(visuallyFriendlySteps)
 
-	// coinFlipChain.PlotStateSequence("fair_coin_flip_chain.png")
-	// evenlyBiasedCoinFlipChain.PlotStateSequence("evenly_biased_coin_flip_chain.png")
-	// unEvenlyBiasedCoinFlipChain.PlotStateSequence("unevenly_biased_coin_flip_chain.png")
+	coinFlipChain.PlotStateSequence("fair_coin_flip_chain.png")
+	evenlyBiasedCoinFlipChain.PlotStateSequence("evenly_biased_coin_flip_chain.png")
+	unEvenlyBiasedCoinFlipChain.PlotStateSequence("unevenly_biased_coin_flip_chain.png")
 
 	fmt.Printf("%v\n", coinFlipChain.PredictNthState(1000))
 	fmt.Printf("%v\n", evenlyBiasedCoinFlipChain.PredictNthState(1000))

@@ -30,17 +30,6 @@ func ToHigherOrderState(s string) HigherOrderState {
 // HigherOrderMatrix: each history → distribution over NEXT single states.
 type HigherOrderMatrix map[string]map[types.State]float64
 
-func fromMatrix(m Matrix) HigherOrderMatrix {
-	hoMatrix := make(HigherOrderMatrix, len(m))
-	for fromState, dist := range m {
-		hoMatrix[string(fromState)] = make(map[types.State]float64, len(dist))
-		for toState, p := range dist {
-			hoMatrix[string(fromState)][toState] = p
-		}
-	}
-	return hoMatrix
-}
-
 // HigherOrderMatrixIdentity builds a uniform baseline distribution.
 func HigherOrderMatrixIdentity(order []HigherOrderState) HigherOrderMatrix {
 	stateSet := make(map[types.State]bool)

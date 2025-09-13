@@ -1,9 +1,6 @@
 package stateMachines
 
 import (
-	"fmt"
-	"image/color"
-	"markov_chains/helpers"
 	"markov_chains/types"
 
 	"gonum.org/v1/plot"
@@ -11,69 +8,11 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
-type CoinFlipChain struct {
-	*MatrixChain // embedded pointer to MatrixChain
-}
-
 type CoinFlipHigherOrderChain struct {
-	*HigherOrderMatrixChain // Embed the HigherOrderMatrixChain
+	*HigherOrderMatrixChain
 }
 
-func NewCoinFlipHigherOrderChain(K int, biasHeads float64) *CoinFlipHigherOrderChain {
-	// Generate the transition matrix for a higher-order coin flip chain
-	matrix := generateCoinFlipHigherOrderMatrix(K, biasHeads)
-
-	// Define the initial history (e.g., all Heads)
-	initialHistory := helpers.HigherOrderState{
-		States: make([]types.State, K),
-	}
-	for i := 0; i < K; i++ {
-		initialHistory.States[i] = types.CoinFlip_Heads
-	}
-
-	// Create the HigherOrderMatrixChain
-	higherOrderChain := NewHigherOrderMatrixChain(matrix, initialHistory, "Higher-Order Coin Flip Chain")
-
-	return &CoinFlipHigherOrderChain{
-		HigherOrderMatrixChain: higherOrderChain,
-	}
-}
-
-func generateCoinFlipHigherOrderMatrix(K int, biasHeads float64) helpers.HigherOrderMatrix {
-	matrix := make(helpers.HigherOrderMatrix)
-
-	// Generate all possible histories of length K
-	states := []types.State{types.CoinFlip_Heads, types.CoinFlip_Tails}
-	histories := helpers.GenerateHigherOrderStates(states, K)
-
-	// Populate the transition matrix
-	for _, history := range histories {
-		row := make(map[types.State]float64)
-
-		// Transition probabilities
-		row[types.CoinFlip_Heads] = biasHeads
-		row[types.CoinFlip_Tails] = 1 - biasHeads
-
-		matrix[history.StateKey()] = row
-	}
-
-	return matrix
-}
-
-func (m *CoinFlipChain) RunSimulation(steps int) {
-	m.runSimulation(steps)
-
-	title := fmt.Sprintf("%s - State Probabilities", m.Description[0:20])
-	err := m.plotStateProbabilitiesOverTime(title+".png", 100)
-
-	if err != nil {
-		fmt.Println("Error plotting:", err)
-	}
-	fmt.Printf("Output state probabilities line graph to %s\n", title+".png")
-	fmt.Println()
-}
-
-func (m *CoinFlipChain) PlotStateSequence(filename string) error {
+func (m *CoinFlipHigherOrderChain) PlotStateSequence(filename string) error {
 	pts := make(plotter.XYs, len(m.stateLog))
 	for i, state := range m.stateLog {
 		var y float64
@@ -105,51 +44,4 @@ func (m *CoinFlipChain) PlotStateSequence(filename string) error {
 	p.Add(line)
 
 	return p.Save(8*vg.Inch, 3*vg.Inch, filename)
-}
-
-func (m *CoinFlipChain) plotStateProbabilitiesOverTime(filename string, maxSteps int) error {
-	headsProb := make(plotter.XYs, maxSteps+1)
-	tailsProb := make(plotter.XYs, maxSteps+1)
-
-	// Initial distribution: 100% Heads, 0% Tails
-	dist := map[types.State]float64{
-		types.CoinFlip_Heads: 0.50,
-		types.CoinFlip_Tails: 0.50,
-	}
-
-	probabilityArray := helpers.GenerateStateProbabilityArray(maxSteps, m.TransitionMatrix, dist, []types.State{types.CoinFlip_Heads, types.CoinFlip_Tails})
-
-	// iterate over and plot probabilityArray
-	for n := 0; n <= maxSteps; n++ {
-		headsProb[n].X = float64(n)
-		headsProb[n].Y = probabilityArray[n][types.CoinFlip_Heads]
-		tailsProb[n].X = float64(n)
-		tailsProb[n].Y = probabilityArray[n][types.CoinFlip_Tails]
-	}
-
-	p := plot.New()
-	p.Title.Text = "Probability of Heads/Tails at Step N"
-	p.X.Label.Text = "Step N"
-	lineHeads, err := plotter.NewLine(headsProb)
-	if err != nil {
-		return err
-	}
-	lineHeads.Color = color.RGBA{R: 255, G: 0, B: 0, A: 255} // Red for Heads
-	lineHeads.LineStyle.Width = vg.Points(2)
-	lineHeads.LineStyle.Dashes = []vg.Length{vg.Points(5), vg.Points(5)}
-
-	lineTails, err := plotter.NewLine(tailsProb)
-	if err != nil {
-		return err
-	}
-	lineTails.Color = color.RGBA{B: 255, A: 255} // Blue for Tails
-	lineTails.LineStyle.Width = vg.Points(2)
-
-	p.Add(lineHeads, lineTails)
-	p.Legend.Add("Heads", lineHeads)
-	p.Legend.Add("Tails", lineTails)
-	p.Y.Min = 0
-	p.Y.Max = 1
-
-	return p.Save(8*vg.Inch, 4*vg.Inch, filename)
 }
